@@ -1,0 +1,163 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>
+		Homework 4
+	</title>
+	<style>
+		.queryHeading{
+			margin-top: 200px;
+			font-family: Times New Roman;
+			font-weight: bold;
+			font-size: 18px;
+			color: black;
+			text-align: center;
+			padding-bottom: 7px;
+		}
+
+		.centerAlign{
+			text-align: center;
+			padding-top: 7px;
+			padding-bottom: 7px;
+		}
+
+		.textBox{
+			border: 1px solid #DDDDDD;
+			padding: 2px;
+		}
+
+		.textBox:focus{
+			border: 1px solid #5E9ED6;	
+		}
+
+		.submitButton{
+			text-align: center;
+			border-radius: 3px;
+			border: 1px solid grey;
+			width: 100px;
+			height: 20px;
+			color: black;
+			margin-top: 10px;
+		}
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		function openJSON(location) {
+			var link = location.link.value;
+			if (link.length == 0){
+				alert("Please enter a valid URL/ filename to continue");
+				return;
+			}
+			parseJSONAndBuildHTML(link);
+		}
+
+		function parseJSONAndBuildHTML(link){
+			try{
+				jsonData = parseJSON(link);
+				jsonData.onload = buildHTML(jsonData);
+			}catch (errorMesage){
+				alert(errorMesage.message);
+				return;
+			}
+			newWindow = window.open("", "Homework 4", "height=1000, width=1200");
+			newWindow.document.write(htmlDoc);
+			newWindow.document.close();
+		}
+
+		function parseJSON(link) {
+			httpRequest = new XMLHttpRequest();
+			httpRequest.open("GET", link, false);
+			try{
+				httpRequest.send();
+			}
+			catch(errorMesage){
+				throw new Error("Invalid location, file not found");
+			}
+			checkResponseData(httpRequest);
+			jsonData = JSON.parse(httpRequest.responseText);
+			return jsonData;
+		}
+
+		function checkResponseData(httpRequest){
+			if (httpRequest.response.length == 0)
+				throw new Error("Entered JSON file is empty. Please use a valid JSON file");
+			if (httpRequest.status == "404")
+				throw new Error("Invalid location, file not found. Status code : " + httpRequest.status);
+		}
+
+		function buildHTML(jsonData){
+			root = jsonData.DocumentElement;
+			htmlDoc = "<html><head><title>JSON Result</title></head><body>";
+			constructTableHeading(jsonData);
+			populateTable(jsonData);
+ 			htmlDoc += "</bo" + "dy></html>";
+		}
+
+		function constructTableHeading(jsonData){
+			tableHeaderInfo = jsonData.Mainline.Table.Header.Data;
+			htmlDoc += "<table border='2'>";
+			htmlDoc += "<tr>"
+			for (i = 0; i < tableHeaderInfo.length; i++)
+				htmlDoc += "<th>" + tableHeaderInfo[i] + "</th>";
+			htmlDoc += "</tr>";
+		}
+
+		function populateTable(jsonData){
+			tableItemRows = jsonData.Mainline.Table.Row;
+			if (tableItemRows == null || tableItemRows.length == 0)
+				throw new Error("There are no rows in the file. Please enter atleast one row");
+			for (i = 0; i < tableItemRows.length; i++){
+				htmlDoc += "<tr>";
+				tableItemCols = tableItemRows[i];
+				var colKeys = Object.keys(tableItemCols);
+				if (tableItemCols["Rank"] != "")
+					htmlDoc += "<td>" + tableItemCols["Rank"] + "</td>";
+				else
+					htmlDoc += "<td></td>";
+				if (tableItemCols["Group"] != "")
+					htmlDoc += "<td>" + tableItemCols["Group"] + "</td>";
+				else
+					htmlDoc += "<td></td>";
+				var listItem = tableItemCols["Hubs"].Hub;
+				htmlDoc += "<td style='width:550px'><ul>";
+				count = 0;
+				while(listItem[count] == "")
+					count++;
+				htmlDoc += "<li style='font-weight:bold'>" + listItem[count] + "</li>";
+				for (k = count + 1; k < listItem.length; k++){
+					if (listItem[k] != "")
+						htmlDoc += "<li>" + listItem[k] + "</li>";
+				}
+				htmlDoc += "</ul></td>";
+				if (tableItemCols["Vehicles"] != "")
+					htmlDoc += "<td>" + tableItemCols["Vehicles"] + "</td>";
+				else
+					htmlDoc += "<td></td>";
+				if (tableItemCols["HomePage"] != "")
+					htmlDoc += "<td style='width:170px'><a href='" + tableItemCols["HomePage"] + "'>" + tableItemCols["HomePage"] + "</a></td>";
+				else
+					htmlDoc += "<td></td>";
+				if (tableItemCols["Logo"] != "")
+					htmlDoc += "<td><img src='" + tableItemCols["Logo"] + "' width='155px' height='155px'></td>";
+				else
+					htmlDoc += "<td></td>";
+				htmlDoc += "</tr>";
+			}
+			htmlDoc += "</table></body></html>";
+		}
+
+	</script>
+
+	<div>
+		<div class="queryHeading">Enter URL for largest manufacturers by production (2017) List JSON File</div>
+		<form class="centerAlign" name="carForm" method="POST" id="inputURL">
+			<input id="urlPath" class="textBox" type="text" name="link"/>
+			<br/>
+			<div class="centerAlign">
+				<input class="submitButton" type="button" name="submit" value="Submit Query" onclick="openJSON(this.form)"/>
+			</div>
+		</form>
+	</div>
+</body>
+</html>
